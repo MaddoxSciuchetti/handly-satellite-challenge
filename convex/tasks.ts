@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 
 export const getTask = query({
   args: { taskId: v.id("tasks") },
@@ -52,6 +53,36 @@ export const getPendingTasks = query({
         createdAt: task._creationTime,
       }))
     );
+  },
+});
+
+// DEV ONLY — simulates what the Python backend will do: seeds fake nodes/edges and marks done
+export const devSimulateCompletion = mutation({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    // Generate a small random graph
+    const nodeCount = 30;
+    const nodeIds: Id<"nodes">[] = [];
+
+    for (let i = 0; i < nodeCount; i++) {
+      const id = await ctx.db.insert("nodes", {
+        taskId: args.taskId,
+        x: Math.random() * 800,
+        y: Math.random() * 600,
+      });
+      nodeIds.push(id);
+    }
+
+    // Connect each node to its neighbour
+    for (let i = 0; i < nodeIds.length - 1; i++) {
+      await ctx.db.insert("edges", {
+        taskId: args.taskId,
+        fromNodeId: nodeIds[i],
+        toNodeId: nodeIds[i + 1],
+      });
+    }
+
+    await ctx.db.patch(args.taskId, { status: "done" });
   },
 });
 

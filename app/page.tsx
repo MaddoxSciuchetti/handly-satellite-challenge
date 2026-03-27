@@ -12,6 +12,7 @@ function UploadView({ onTaskCreated }: { onTaskCreated: (id: Id<"tasks">) => voi
     const [images, setImages] = useState<File[]>([]);
     const [taskName, setTaskName] = useState("");
     const [uploading, setUploading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
@@ -19,8 +20,8 @@ function UploadView({ onTaskCreated }: { onTaskCreated: (id: Id<"tasks">) => voi
 
     function handleFiles(files: FileList | null) {
         if (!files) return;
-        const valid = Array.from(files).filter((f) => f.type.startsWith("image/"));
-        setImages((prev) => [...prev, ...valid]);
+        // Accept any file — satellite formats (GeoTIFF, etc.) often have no MIME type
+        setImages((prev) => [...prev, ...Array.from(files)]);
     }
 
     function removeImage(index: number) {
@@ -36,17 +37,23 @@ function UploadView({ onTaskCreated }: { onTaskCreated: (id: Id<"tasks">) => voi
         e.preventDefault();
         if (images.length === 0) return;
         setUploading(true);
+        setError(null);
 
-        // Upload first image (one task = one image per schema)
-        const uploadUrl = await generateUploadUrl();
-        const res = await fetch(uploadUrl, {
-            method: "PUT",
-            headers: { "Content-Type": images[0].type },
-            body: images[0],
-        });
-        const { storageId } = await res.json();
-        const taskId = await createTask({ imageId: storageId });
-        onTaskCreated(taskId);
+        try {
+            const uploadUrl = await generateUploadUrl();
+            const res = await fetch(uploadUrl, {
+                method: "PUT",
+                headers: { "Content-Type": images[0].type || "application/octet-stream" },
+                body: images[0],
+            });
+            if (!res.ok) throw new Error(`Upload failed: ${res.status} ${res.statusText}`);
+            const { storageId } = await res.json();
+            const taskId = await createTask({ imageId: storageId });
+            onTaskCreated(taskId);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Something went wrong.");
+            setUploading(false);
+        }
     }
 
     return (
@@ -102,6 +109,10 @@ function UploadView({ onTaskCreated }: { onTaskCreated: (id: Id<"tasks">) => voi
                     </div>
                 )}
 
+                {error && (
+                    <p className="text-sm text-red-500">{error}</p>
+                )}
+
                 <button
                     type="submit"
                     disabled={images.length === 0 || !taskName || uploading}
@@ -120,6 +131,7 @@ function ResultsView({ taskId, onReset }: { taskId: Id<"tasks">; onReset: () => 
     const task = useQuery(api.tasks.getTask, { taskId });
     const nodes = useQuery(api.tasks.getNodes, { taskId });
     const edges = useQuery(api.tasks.getEdges, { taskId });
+    const simulate = useMutation(api.tasks.devSimulateCompletion);
 
     const isDone = task?.status === "done";
 
@@ -148,12 +160,18 @@ function ResultsView({ taskId, onReset }: { taskId: Id<"tasks">; onReset: () => 
             {/* Canvas area */}
             <div className="w-full h-[600px] bg-zinc-50 flex items-center justify-center">
                 {!isDone ? (
-                    <div className="flex flex-col items-center gap-3 text-zinc-400">
+                    <div className="flex flex-col items-center gap-4 text-zinc-400">
                         <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                         </svg>
                         <span className="text-sm">Waiting for results</span>
+                        <button
+                            onClick={() => simulate({ taskId })}
+                            className="mt-2 rounded-md border border-zinc-300 px-3 py-1.5 text-xs text-zinc-500 hover:border-zinc-500 hover:text-zinc-800 transition-colors"
+                        >
+                            [dev] simulate completion
+                        </button>
                     </div>
                 ) : nodes && edges ? (
                     <GraphCanvas nodes={nodes} edges={edges} />

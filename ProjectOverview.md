@@ -29,3 +29,5 @@ What is returned:
 -Index of dots
 
 Main Goals: Get a high precision area
+
+Whenever status switches to done than create another mutation that fetches than everything for that created task (which is all of the coordinates etc). obviously thsi should work with optimistic updates
