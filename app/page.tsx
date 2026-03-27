@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useMutation } from "convex/react";
+import { useRef, useState, useEffect } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { GraphCanvas } from "./GraphCanvas";
@@ -403,34 +403,56 @@ function CanvasView({
   flaggedFiles: File[];
   onReset: () => void;
 }) {
-  const { nodes: initialNodes, edges } = MOCK;
-  const [liveNodes, setLiveNodes] = useState<Node[]>(initialNodes);
+  const task     = useQuery(api.tasks.getTask, { taskId });
+  const simulate = useMutation(api.tasks.devSimulateCompletion);
+
+  // Map embedded arrays → typed objects with synthetic IDs for GraphCanvas
+  const backendNodes = (task?.nodes ?? []).map((n, i) => ({ _id: `n-${i}`, x: n.x, y: n.y }));
+  const backendEdges = (task?.edges ?? []).map((e, i) => ({
+    _id: `e-${i}`,
+    fromNodeId: `n-${e.from}`,
+    toNodeId: `n-${e.to}`,
+  }));
+
+  const [liveNodes, setLiveNodes] = useState<Node[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const total = 1 + flaggedFiles.length;
+
+  useEffect(() => {
+    if (backendNodes.length > 0) setLiveNodes(backendNodes);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task?.nodes]);
+
+  const nodes = liveNodes;
+  const edges = backendEdges;
+
+  const isDone       = task?.status === "done";
+  const hasNodes     = nodes.length > 0;
+  const isProcessing = !isDone || !hasNodes;
+  const total        = 1 + flaggedFiles.length;
 
   return (
     <div className="w-full max-w-7xl bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
         <div className="flex items-center gap-3">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span className="text-sm font-medium text-zinc-800">Analysis complete</span>
+          <span className={`w-2 h-2 rounded-full ${isDone && hasNodes ? "bg-emerald-500" : "bg-amber-400 animate-pulse"}`} />
+          <span className="text-sm font-medium text-zinc-800">
+            {isDone && hasNodes ? "Analysis complete" : "Processing…"}
+          </span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xs text-zinc-400">{liveNodes.length} nodes · {edges.length} edges</span>
+          <span className="text-xs text-zinc-400">{nodes.length} nodes · {edges.length} edges</span>
           <span className="text-xs text-zinc-400">{total} image{total > 1 ? "s" : ""}{flaggedFiles.length > 0 ? ` (${flaggedFiles.length} flagged)` : ""}</span>
           <span className="font-mono text-xs text-zinc-300" title="Convex task ID">{taskId.slice(0, 8)}…</span>
-          <button onClick={onReset} className="text-xs text-zinc-500 hover:text-zinc-900 transition-colors">
-            ← New task
-          </button>
+          <button onClick={onReset} className="text-xs text-zinc-500 hover:text-zinc-900 transition-colors">← New task</button>
         </div>
       </div>
 
       {/* Body: canvas + sidebar */}
-      <div className="flex h-[680px]">
+      <div className="flex h-[680px] relative">
         <div className="flex-1 min-w-0">
           <GraphCanvas
-            nodes={initialNodes}
+            nodes={nodes}
             edges={edges}
             mainImage={mainFile}
             flaggedImages={flaggedFiles}
@@ -444,13 +466,36 @@ function CanvasView({
             }}
           />
         </div>
+
         <Sidebar
-          nodes={liveNodes}
+          nodes={nodes}
           edges={edges}
           mainFile={mainFile}
           flaggedFiles={flaggedFiles}
           selectedNode={selectedNode}
         />
+
+        {/* Processing overlay — shown until backend delivers nodes */}
+        {isProcessing && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm pointer-events-none">
+            <div className="pointer-events-auto flex flex-col items-center gap-4 bg-white rounded-2xl border border-zinc-200 shadow-md px-8 py-7 max-w-xs text-center">
+              <svg className="w-5 h-5 animate-spin text-zinc-400" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-zinc-800">Waiting for analysis</p>
+                <p className="text-xs text-zinc-400 mt-1">The backend will map nodes directly onto the image once processing is complete.</p>
+              </div>
+              <button
+                onClick={() => simulate({ taskId })}
+                className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs text-zinc-500 hover:border-zinc-500 hover:text-zinc-800 transition-colors"
+              >
+                [dev] simulate completion
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

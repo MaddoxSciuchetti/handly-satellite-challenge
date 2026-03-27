@@ -39,7 +39,30 @@ export function GraphCanvas({ nodes, edges, mainImage, flaggedImages = [], onNod
   const touchRef = useRef<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
 
   const [localNodes, setLocalNodes] = useState<Node[]>(nodes);
-  useEffect(() => { setLocalNodes(nodes); }, [nodes]);
+  const isDragging = useRef(false);
+
+  // Sync from parent only when not mid-drag (prevents resetting a live drag)
+  useEffect(() => {
+    if (!isDragging.current) setLocalNodes(nodes);
+  }, [nodes]);
+
+  // Auto-fit when nodes first arrive (transition from empty → populated)
+  const prevNodeCount = useRef(nodes.length);
+  useEffect(() => {
+    if (prevNodeCount.current === 0 && nodes.length > 0) {
+      const { w, h } = canvasSize;
+      if (w === 0 || h === 0) return;
+      const xs = nodes.map((n) => n.x), ys = nodes.map((n) => n.y);
+      const [minX, maxX] = [Math.min(...xs), Math.max(...xs)];
+      const [minY, maxY] = [Math.min(...ys), Math.max(...ys)];
+      const [gw, gh] = [maxX - minX || 1, maxY - minY || 1];
+      const pad = 80;
+      const s = Math.min((w - pad * 2) / gw, (h - pad * 2) / gh, 4);
+      setScale(s);
+      setOffset({ x: w / 2 - (minX + gw / 2) * s, y: h / 2 - (minY + gh / 2) * s });
+    }
+    prevNodeCount.current = nodes.length;
+  }, [nodes, canvasSize]);
 
   const mainImgRef = useRef<HTMLImageElement | null>(null);
   const flaggedImgsRef = useRef<HTMLImageElement[]>([]);
@@ -304,6 +327,7 @@ export function GraphCanvas({ nodes, edges, mainImage, flaggedImages = [], onNod
         if (hit) {
           setSelectedId(hit._id);
           onNodeSelect?.(hit);
+          isDragging.current = true;
           nodeDrag.current = { nodeId: hit._id, startX: e.clientX, startY: e.clientY };
         }
       } else {
@@ -319,6 +343,7 @@ export function GraphCanvas({ nodes, edges, mainImage, flaggedImages = [], onNod
       if (hit) {
         setSelectedId(hit._id);
         onNodeSelect?.(hit);
+        isDragging.current = true;
         nodeDrag.current = { nodeId: hit._id, startX: e.clientX, startY: e.clientY };
       } else {
         setSelectedId(null);
@@ -371,6 +396,7 @@ export function GraphCanvas({ nodes, edges, mainImage, flaggedImages = [], onNod
   function onMouseUp() {
     panDrag.current = null;
     nodeDrag.current = null;
+    isDragging.current = false;
   }
 
   function onWheel(e: React.WheelEvent) {
