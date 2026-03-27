@@ -1,0 +1,87 @@
+{
+    "bericht": {
+        "datum_drohnenflug": "2024-03-05",
+        "datum_bericht": "2024-03-13",
+        "zertifizierung": "DIN SPEC 5452-5:2021-11",
+        "aufmassmethode": "3D-Vermessung mittels photogrammetrischer Luftbildauswertung",
+        "genauigkeit": "+/- 10 cm",
+        "regelwerke": [
+            "VOB/C",
+            "ATV DIN 18299",
+            "ATV DIN 18334",
+            "ATV DIN 18336",
+            "ATV DIN 18338",
+            "ATV DIN 18339"
+        ]
+    },
+    "flaechen_m2": {
+        "gesamt": 316.81,
+        "steildach": 181.94,
+        "flachdach": null,
+        "andere_dachflaechen": 4.71,
+        "gaubendach": 72.53,
+        "gaubenwange": 10.7,
+        "gaubenfront": 46.93,
+        "einzelflaechen": [
+            { "bezeichnung": "Hauptfläche West", "m2": 70.23 },
+            { "bezeichnung": "Hauptfläche Ost", "m2": 69.85 },
+            { "bezeichnung": "Untere Fläche West", "m2": 27.0 },
+            { "bezeichnung": "Untere Fläche Ost", "m2": 27.14 },
+            { "bezeichnung": "Gaube West (Dach)", "m2": 23.61 },
+            { "bezeichnung": "Gaube Ost (Dach)", "m2": 23.32 },
+            { "bezeichnung": "Gaube West (Front)", "m2": 15.45 },
+            { "bezeichnung": "Gaube Ost (Front)", "m2": 15.35 },
+            { "bezeichnung": "Gaube Ost (Oberfläche)", "m2": 14.72 },
+            { "bezeichnung": "Vorbau/Erker", "m2": 4.86 },
+            { "bezeichnung": "Kleinfläche Ost", "m2": 4.64 },
+            { "bezeichnung": "Gaubenwange West oben", "m2": 2.75 },
+            { "bezeichnung": "Gaubenwange West unten", "m2": 2.73 },
+            { "bezeichnung": "Gaubenwange Ost oben", "m2": 2.64 },
+            { "bezeichnung": "Gaubenwange Ost unten", "m2": 2.6 },
+            { "bezeichnung": "Kehlfläche Nord", "m2": 2.22 },
+            { "bezeichnung": "Kehlfläche Mitte", "m2": 2.21 },
+            { "bezeichnung": "Kehlfläche Süd", "m2": 2.25 },
+            { "bezeichnung": "Dreieck Süd-West", "m2": 2.71 },
+            { "bezeichnung": "Dreieck Nord-West", "m2": 2.14 },
+            { "bezeichnung": "Dreieck Ost", "m2": 2.21 },
+            { "bezeichnung": "Kleinfläche Süd", "m2": 2.07 },
+            { "bezeichnung": "Kleinfläche Dach Nord", "m2": 1.76 },
+            { "bezeichnung": "Kleinfläche Süd unten", "m2": 1.86 },
+            { "bezeichnung": "Gaubendetail NW oben", "m2": 0.43 },
+            { "bezeichnung": "Gaubendetail NW unten", "m2": 0.18 },
+            { "bezeichnung": "Gaubendetail NO oben", "m2": 0.42 },
+            { "bezeichnung": "Gaubendetail NO unten", "m2": 0.17 },
+            { "bezeichnung": "Gaubendetail SO oben", "m2": 0.15 },
+            { "bezeichnung": "Gaubendetail SO unten", "m2": 0.38 },
+            { "bezeichnung": "Vorbau Süd", "m2": 1.21 },
+            { "bezeichnung": "Vorbau Süd klein", "m2": 0.29 }
+        ]
+    },
+    "laengen_m": {
+        "first": 10.24,
+        "grat": 33.71,
+        "traufe": 43.57,
+        "kehle": 23.41,
+        "ortgang": 28.41,
+        "dachbruch": 41.72,
+        "verfallung": null,
+        "kaminanschluss": 3.81,
+        "fenster": 2.72,
+        "andere": 82.37,
+        "sparrenlaenge": null
+    },
+    "dachneigung_grad": {
+        "gemessene_winkel": [
+            25, 25, 32, 34, 42, 43, 43, 45, 45, 45, 46, 47, 49, 49, 50, 51, 51,
+            51, 51, 51, 51, 53, 53
+        ],
+        "bereich": { "min": 25, "max": 53 },
+        "hauptdachflaechen": [51, 53],
+        "gauben": [43, 45, 47, 49, 51],
+        "vorbau_sued": [42, 45, 46, 50]
+    },
+    "objekte": {
+        "fenster": 1,
+        "lueftungsrohre": 2
+    }
+}
