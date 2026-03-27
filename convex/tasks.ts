@@ -87,19 +87,3 @@ export const saveGraph = mutation({
   },
 });
 
-// DEV ONLY — simulates the Python backend writing results
-export const devSimulateCompletion = mutation({
-  args: { taskId: v.id("tasks") },
-  handler: async (ctx, args) => {
-    const count = 30;
-    const nodes = Array.from({ length: count }, () => ({
-      x: Math.random() * 800,
-      y: Math.random() * 600,
-    }));
-    const edges = Array.from({ length: count - 1 }, (_, i) => ({
-      from: i,
-      to: i + 1,
-    }));
-    await ctx.db.patch(args.taskId, { nodes, edges, status: "done" });
-  },
-});
