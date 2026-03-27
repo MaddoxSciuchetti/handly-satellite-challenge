@@ -37,6 +37,22 @@ export const generateUploadUrl = mutation({
   },
 });
 
+// Returns every task with its signed image URL and metadata
+export const getAllTasks = query({
+  args: {},
+  handler: async (ctx) => {
+    const tasks = await ctx.db.query("tasks").order("desc").take(100);
+    return await Promise.all(
+      tasks.map(async (task) => ({
+        taskId: task._id,
+        status: task.status,
+        imageUrl: await ctx.storage.getUrl(task.imageId),
+        createdAt: task._creationTime,
+      }))
+    );
+  },
+});
+
 // Returns all in_progress tasks with a signed image URL ready for processing
 export const getPendingTasks = query({
   args: {},
