@@ -1,6 +1,33 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+export const getTask = query({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.taskId);
+  },
+});
+
+export const getNodes = query({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("nodes")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .take(8192);
+  },
+});
+
+export const getEdges = query({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("edges")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .take(8192);
+  },
+});
+
 // Step 1: frontend calls this to get a short-lived upload URL
 export const generateUploadUrl = mutation({
   args: {},
